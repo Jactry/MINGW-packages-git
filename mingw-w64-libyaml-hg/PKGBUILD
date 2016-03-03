@@ -1,0 +1,55 @@
+# Maintainer: Jactry Zeng <jactry92@gmail.com>
+
+_realname=libyaml
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}-hg"
+pkgver=r94.2b9156756423
+pkgrel=1
+pkgdesc="YAML 1.1 library (mingw-w64)"
+arch=('any')
+url="http://pyyaml.org/wiki/LibYAML"
+license=("MIT")
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config")
+options=('staticlibs' 'strip')
+source=("${_realname}"::"hg+https://bitbucket.org/xi/libyaml"
+        "0001-Proper-mingw-YAML_DECLARE-definition.patch"
+        "0002-libyaml-no-undefined.patch")
+md5sums=('SKIP'
+         '62993ee836b420adc99bc42dff09436b'
+         'fb8fcb80f89abeee56310b2568749276')
+provides=("${MINGW_PACKAGE_PREFIX}-${_realname}")
+conflicts=("${MINGW_PACKAGE_PREFIX}-${_realname}")
+
+pkgver() {
+  cd "$srcdir/$_realname"
+  printf "r%s.%s" "$(hg identify -n)" "$(hg identify -i)"
+}
+
+prepare() {
+  cd ${srcdir}/${_realname}
+  patch -Np1 -i "$srcdir/0001-Proper-mingw-YAML_DECLARE-definition.patch"
+  patch -Np1 -i "$srcdir/0002-libyaml-no-undefined.patch"
+  
+  autoreconf -fiv
+}
+
+build() {
+  [[ -d ${srcdir}/build-${MINGW_CHOST} ]] && rm -rf ${srcdir}/build-${MINGW_CHOST}
+  mkdir -p ${srcdir}/build-${MINGW_CHOST} && cd ${srcdir}/build-${MINGW_CHOST}
+
+  ../${_realname}/configure \
+    --prefix=${MINGW_PREFIX} \
+    --build=${MINGW_CHOST} \
+    --host=${MINGW_CHOST} \
+    --target=${MINGW_CHOST}
+
+  make
+}
+check() {
+  cd "${srcdir}"/build-${MINGW_CHOST}
+  make check
+}
+
+package() {
+  cd "${srcdir}/build-${MINGW_CHOST}"
+  make DESTDIR=${pkgdir} install
+}
