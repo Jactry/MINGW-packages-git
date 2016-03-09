@@ -20,7 +20,7 @@ list_commits()  { list_changes commits '*' '#*::' --pretty=format:'%ai::[%h] %s'
 cd "$(dirname "$0")"
 git_config user.email 'ci@msys2.org'
 git_config user.name  'MSYS2 Continuous Integration'
-git remote add upstream 'https://github.com/Alexpux/MINGW-packages'
+git remote add upstream 'https://github.com/Jactry/MINGW-packages-git'
 git fetch --quiet upstream
 
 # Detect
