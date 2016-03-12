@@ -1,0 +1,60 @@
+# Maintainer: Jactry Zeng <jactry92@gmail.com>
+
+_realname=mercurial
+pkgbase=mingw-w64-${_realname}
+pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}")
+pkgver=3.7.2
+pkgrel=1
+pkgdesc="A scalable distributed SCM tool (mingw-w64)"
+arch=('i686' 'x86_64')
+url="https://www.mercurial-scm.org/"
+license=('GPL')
+groups=('VCS')
+depends=("${MINGW_PACKAGE_PREFIX}-python2")
+#optdepends=('tk: for the hgk GUI')
+backup=('etc/mercurial/hgrc')
+source=("https://mercurial-scm.org/release/${_realname}-${pkgver}.tar.gz"{,.asc}
+        'mercurial.profile')
+sha256sums=('5ba9438d6ab0db93f7b0786ba632138eb64a9dc0d93e30dde2b17b328fdc6d7a'
+            '45ae2f0633a7d1aa111b676e1f5421d8033f2dafc14127fbec26a8b5e1a83f85'
+            '460445ee52e572f0be1c9aadbef740da6e6b46ae80f13455fbfbb8a8243a2ea9')
+
+prepare() {
+  cd "${srcdir}/${_realname}-${pkgver}"
+}
+
+check()
+{
+  cd "${srcdir}/${_realname}-${pkgver}"
+  cd tests && ${MINGW_PREFIX}/bin/python2 run-tests.py
+}
+
+package() {
+  export PYTHON_PATH=${MINGW_PREFIX}/bin/python2
+  cd "${srcdir}/${_realname}-${pkgver}"
+  ${MINGW_PREFIX}/bin/python2 setup.py build
+  ${MINGW_PREFIX}/bin/python2 setup.py install --prefix=/${MINGW_PREFIX} --root="${pkgdir}"
+  sed -i -e 's#env python#env ${MINGW_PREFIX}/bin/python2#' \
+    "${pkgdir}"${MINGW_PREFIX}/lib/python2.7/site-packages/mercurial/lsprof.py
+
+  install -d ${pkgdir}${MINGW_PREFIX}/share/man/{man1,man5}
+  install -m644 doc/hg.1 "${pkgdir}${MINGW_PREFIX}/share/man/man1"
+  install -m644 doc/{hgrc.5,hgignore.5} "${pkgdir}${MINGW_PREFIX}/share/man/man5"
+  install -m755 contrib/hgk "${pkgdir}${MINGW_PREFIX}/bin"
+  install -m644 -D contrib/bash_completion "${pkgdir}${MINGW_PREFIX}/share/bash-completion/completions/hg"
+  install -d "${pkgdir}${MINGW_PREFIX}/share/emacs/site-lisp"
+  install -m644 contrib/{mq.el,mercurial.el} "${pkgdir}${MINGW_PREFIX}/share/emacs/site-lisp"
+
+  vimpath="${pkgdir}${MINGW_PREFIX}/share/vim/vimfiles"
+  install -Dm644 contrib/vim/HGAnnotate.vim "${vimpath}/syntax/HGAnnotate.vim"
+
+  # set some variables
+  install -m755 -d ${pkgdir}${MINGW_PREFIX}/etc/profile.d
+  install -m755 ${srcdir}/mercurial.profile "${pkgdir}${MINGW_PREFIX}/etc/profile.d/mercurial.sh"
+
+  # install configuration file
+  install -m755 -d ${pkgdir}${MINGW_PREFIX}/etc/mercurial
+
+  # FS#38825 - Add certs config to package
+  echo -e "\n[web]\ncacerts = /usr/ssl/certs/ca-bundle.crt\n" >> "${pkgdir}${MINGW_PREFIX}/etc/mercurial/hgrc"
+}
