@@ -33,7 +33,7 @@ test -z "${packages}" && success 'No changes in package recipes'
 status 'Building packages' "${packages[@]}"
 execute 'Upgrading the system' pacman --noconfirm --noprogressbar --sync --refresh --refresh --sysupgrade
 for package in "${packages[@]}"; do
-    execute 'Building' makepkg-mingw --noconfirm --noprogressbar --skippgpcheck --nocheck --syncdeps --rmdeps --cleanbuild
+    execute 'Building' makepkg-mingw --noconfirm --noprogressbar --skippgpcheck --syncdeps --rmdeps --cleanbuild
     yes|execute 'Installing' pacman --noprogressbar --upgrade *.pkg.tar.xz
 done
 success 'All packages built and installed successfully'
